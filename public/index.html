@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JSON Editor App</title>
+  <!-- JSONEditor CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/jsoneditor@9.5.6/dist/jsoneditor.min.css" rel="stylesheet" type="text/css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 10px;
+    }
+    .tab {
+      padding: 10px 20px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+    .tab.active {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    #jsoneditor {
+      width: 100%;
+      height: 400px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="tabs">
+    <div class="tab active" data-tab="input">Input</div>
+    <div class="tab" data-tab="output">Output</div>
+  </div>
+
+  <div id="input" class="tab-content active">
+    <button onclick="fetchEntries('input')">Load Inputs</button>
+    <table id="input-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Created At</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="output" class="tab-content">
+    <button onclick="fetchEntries('output')">Load Outputs</button>
+    <table id="output-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Created At</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="jsoneditor"></div>
+  <button onclick="saveEntry()">Save</button>
+
+  <!-- JSONEditor JS -->
+  <script src="https://cdn.jsdelivr.net/npm/jsoneditor@9.5.6/dist/jsoneditor.min.js"></script>
+  <script>
+    let editor = null;
+    let currentType = 'input';
+    let currentId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const container = document.getElementById('jsoneditor');
+      editor = new JSONEditor(container, {
+        mode: 'code',
+        modes: ['code', 'tree']
+      });
+
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById(tab.dataset.tab).classList.add('active');
+          currentType = tab.dataset.tab;
+          fetchEntries(currentType);
+        });
+      });
+
+      fetchEntries(currentType);
+    });
+
+    async function fetchEntries(type) {
+      try {
+        const response = await fetch(`/${type}`);
+        const entries = await response.json();
+        const tableBody = document.querySelector(`#${type}-table tbody`);
+        tableBody.innerHTML = '';
+        entries.forEach(entry => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${entry._id}</td>
+            <td>${new Date(entry.createdAt).toLocaleString()}</td>
+            <td><button onclick="loadEntry('${entry._id}')">Load</button></td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error fetching entries:', error);
+      }
+    }
+
+    async function loadEntry(id) {
+      try {
+        const response = await fetch(`/${currentType}`);
+        const entries = await response.json();
+        const entry = entries.find(e => e._id === id);
+        if (entry) {
+          editor.set(entry.data);
+          currentId = id;
+        }
+      } catch (error) {
+        console.error('Error loading entry:', error);
+      }
+    }
+
+    async function saveEntry() {
+      try {
+        const data = editor.get();
+        const response = await fetch(`/${currentType}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        alert(`${currentType} saved with ID: ${result._id}`);
+        fetchEntries(currentType);
+      } catch (error) {
+        console.error('Error saving entry:', error);
+      }
+    }
+  </script>
+</body>
+</html>
