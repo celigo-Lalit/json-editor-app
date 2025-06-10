@@ -92,6 +92,66 @@ app.get('/output/:id', async (req, res) => {
   }
 });
 
+// Update input by ID
+app.put('/input/:id', async (req, res) => {
+  try {
+    const entry = await Entry.findOneAndUpdate(
+      { _id: req.params.id, type: 'input' },
+      { data: req.body },
+      { new: true }
+    );
+    if (!entry) {
+      return res.status(404).json({ error: 'Input entry not found' });
+    }
+    res.json(entry);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Delete input by ID
+app.delete('/input/:id', async (req, res) => {
+  try {
+    const entry = await Entry.findOneAndDelete({ _id: req.params.id, type: 'input' });
+    if (!entry) {
+      return res.status(404).json({ error: 'Input entry not found' });
+    }
+    res.json({ message: 'Input entry deleted', entry });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update output by ID
+app.put('/output/:id', async (req, res) => {
+  try {
+    const entry = await Entry.findOneAndUpdate(
+      { _id: req.params.id, type: 'output' },
+      { data: req.body },
+      { new: true }
+    );
+    if (!entry) {
+      return res.status(404).json({ error: 'Output entry not found' });
+    }
+    res.json(entry);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Delete output by ID
+app.delete('/output/:id', async (req, res) => {
+  try {
+    const entry = await Entry.findOneAndDelete({ _id: req.params.id, type: 'output' });
+    if (!entry) {
+      return res.status(404).json({ error: 'Output entry not found' });
+    }
+    res.json({ message: 'Output entry deleted', entry });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

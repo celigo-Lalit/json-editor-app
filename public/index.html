@@ -46,6 +46,9 @@
       height: 400px;
       margin-top: 10px;
     }
+    .action-buttons button {
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
@@ -61,7 +64,7 @@
         <tr>
           <th>ID</th>
           <th>Created At</th>
-          <th>Action</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -75,7 +78,7 @@
         <tr>
           <th>ID</th>
           <th>Created At</th>
-          <th>Action</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -106,6 +109,8 @@
           tab.classList.add('active');
           document.getElementById(tab.dataset.tab).classList.add('active');
           currentType = tab.dataset.tab;
+          currentId = null;
+          editor.set({});
           fetchEntries(currentType);
         });
       });
@@ -124,7 +129,10 @@
           row.innerHTML = `
             <td>${entry._id}</td>
             <td>${new Date(entry.createdAt).toLocaleString()}</td>
-            <td><button onclick="loadEntry('${entry._id}')">Load</button></td>
+            <td class="action-buttons">
+              <button onclick="loadEntry('${entry._id}')">Load</button>
+              <button onclick="deleteEntry('${entry._id}')">Delete</button>
+            </td>
           `;
           tableBody.appendChild(row);
         });
@@ -135,31 +143,73 @@
 
     async function loadEntry(id) {
       try {
-        const response = await fetch(`/${currentType}`);
-        const entries = await response.json();
-        const entry = entries.find(e => e._id === id);
-        if (entry) {
-          editor.set(entry.data);
-          currentId = id;
+        const response = await fetch(`/${currentType}/${id}`);
+        if (!response.ok) {
+          throw new Error('Entry not found');
         }
+        const entry = await response.json();
+        editor.set(entry.data);
+        currentId = id;
       } catch (error) {
         console.error('Error loading entry:', error);
+        alert('Failed to load entry.');
       }
     }
 
     async function saveEntry() {
       try {
         const data = editor.get();
-        const response = await fetch(`/${currentType}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
+        let response;
+        if (currentId) {
+          // Update existing entry
+          response = await fetch(`/${currentType}/${currentId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        } else {
+          // Create new entry
+          response = await fetch(`/${currentType}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to save entry');
+        }
+
         const result = await response.json();
-        alert(`${currentType} saved with ID: ${result._id}`);
+        alert(`${currentType} entry saved with ID: ${result._id}`);
+        currentId = result._id;
         fetchEntries(currentType);
       } catch (error) {
         console.error('Error saving entry:', error);
+        alert('Failed to save entry.');
+      }
+    }
+
+    async function deleteEntry(id) {
+      if (!confirm('Are you sure you want to delete this entry?')) {
+        return;
+      }
+      try {
+        const response = await fetch(`/${currentType}/${id}`, {
+          method: 'DELETE'
+        });
+        if (!response.ok) {
+          throw new Error('Failed to delete entry');
+        }
+        alert('Entry deleted successfully.');
+        if (currentId === id) {
+          editor.set({});
+          currentId = null;
+        }
+        fetchEntries(currentType);
+      } catch (error) {
+        console.error('Error deleting entry:', error);
+        alert('Failed to delete entry.');
       }
     }
   </script>
