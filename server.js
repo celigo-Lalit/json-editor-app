@@ -23,8 +23,8 @@ mongoose.connect(mongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // API Endpoints
 
@@ -151,6 +151,72 @@ app.delete('/output/:id', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+// Create a new mapping entry
+app.post('/mapping', async (req, res) => {
+  try {
+    const entry = new Entry({ type: 'mapping', data: req.body });
+    await entry.save();
+    res.status(201).json(entry);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get all mapping entries
+app.get('/mapping', async (req, res) => {
+  try {
+    const entries = await Entry.find({ type: 'mapping' });
+    res.json(entries);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get a specific mapping entry by ID
+app.get('/mapping/:id', async (req, res) => {
+  try {
+    const entry = await Entry.findOne({ _id: req.params.id, type: 'mapping' });
+    if (!entry) {
+      return res.status(404).json({ error: 'Mapping entry not found' });
+    }
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update a mapping entry by ID
+app.put('/mapping/:id', async (req, res) => {
+  try {
+    const entry = await Entry.findOneAndUpdate(
+      { _id: req.params.id, type: 'mapping' },
+      { data: req.body },
+      { new: true }
+    );
+    if (!entry) {
+      return res.status(404).json({ error: 'Mapping entry not found' });
+    }
+    res.json(entry);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Delete a mapping entry by ID
+app.delete('/mapping/:id', async (req, res) => {
+  try {
+    const entry = await Entry.findOneAndDelete({ _id: req.params.id, type: 'mapping' });
+    if (!entry) {
+      return res.status(404).json({ error: 'Mapping entry not found' });
+    }
+    res.json({ message: 'Mapping entry deleted', entry });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // Start the server
 app.listen(PORT, () => {

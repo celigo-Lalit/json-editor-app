@@ -54,12 +54,27 @@
 <body>
   <div class="tabs">
     <div class="tab active" data-tab="input">Input</div>
+    <div class="tab" data-tab="mapping">Mapping</div>
     <div class="tab" data-tab="output">Output</div>
   </div>
 
   <div id="input" class="tab-content active">
     <button onclick="fetchEntries('input')">Load Inputs</button>
     <table id="input-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Created At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="mapping" class="tab-content">
+    <button onclick="fetchEntries('mapping')">Load Mappings</button>
+    <table id="mapping-table">
       <thead>
         <tr>
           <th>ID</th>
