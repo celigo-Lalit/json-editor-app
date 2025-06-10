@@ -66,6 +66,32 @@ app.get('/output', async (req, res) => {
   }
 });
 
+// Get input by ID
+app.get('/input/:id', async (req, res) => {
+  try {
+    const entry = await Entry.findOne({ _id: req.params.id, type: 'input' });
+    if (!entry) {
+      return res.status(404).json({ error: 'Input entry not found' });
+    }
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get output by ID
+app.get('/output/:id', async (req, res) => {
+  try {
+    const entry = await Entry.findOne({ _id: req.params.id, type: 'output' });
+    if (!entry) {
+      return res.status(404).json({ error: 'Output entry not found' });
+    }
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
